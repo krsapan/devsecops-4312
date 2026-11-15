@@ -5,11 +5,7 @@ on:
   push:
     branches:
       - test1
-    paths:
-      - client/**
-      - server/**
-      - .github/workflows/test-gitleaks.yml
-  
+
 jobs:
   gitleaks-scan:
     name: Gitleaks Scan
@@ -17,21 +13,14 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
 
       - name: Run Gitleaks Scan
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/repo" \
-            zricethezav/gitleaks:latest detect \
-            --no-git \
-            --source=/repo \
-            --report-format=json \
-            --report-path=/repo/gitleaks-report.json \
-            --redact \
-            --exit-code 0
-      - name: Upload Gitleaks report
-        uses: actions/upload-artifact@v4
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: gitleaks-report
-          path: gitleaks-report.json
-          if-no-files-found: warn
+          report-format: json
+          report-path: gitleaks-report.json
+          args: detect # Forces a full scan of the repo and history 
